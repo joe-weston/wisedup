@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Base theme. Material3 Dynamic Color is OK if available; we fall back to our tokens. -->
+    <style name="Theme.WisedUpFocus" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/surface_light</item>
+    </style>
+
+    <!--
+      Fullscreen variant for FocusActivity.
+      - No action bar, no system bar contrast.
+      - immersive sticky is applied programmatically via SystemUiUtils.applyImmersive().
+    -->
+    <style name="Theme.WisedUpFocus.Fullscreen" parent="Theme.WisedUpFocus">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowContentTransitions">false</item>
+        <item name="android:statusBarColor">@color/focus_active_red</item>
+        <item name="android:navigationBarColor">@color/focus_active_red</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>
