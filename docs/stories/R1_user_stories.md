@@ -193,7 +193,7 @@ As the focus enforcer, I want to detect any other app coming to the foreground a
 As the app, I want a properly-configured notification channel and runtime permission flow so that the foreground-service notification displays reliably on Android 13+.
 
 **Acceptance criteria:**
-- Given `WisedUpApplication.onCreate`, when called, then it creates the `focus_mode` `NotificationChannel` with `IMPORTANCE_HIGH`, name "Focus Mode", description "Shown while WisedUp Focus is active so you always know your status." (idempotent on subsequent launches).
+- Given `WisedUpApplication.onCreate`, when called, then it creates the `focus_mode` `NotificationChannel` with `IMPORTANCE_LOW`, name "Focus Mode", description "Shown while WisedUp Focus is active so you always know your status." (idempotent on subsequent launches). _PM amendment 2026-05-08: importance changed from HIGH → LOW. HIGH would emit heads-up banners over the lock screen for an always-on indicator, which is hostile UX. LOW gives a persistent, non-intrusive status notification. Behavioral enforcement is the AccessibilityService relaunch loop, not the notification's prominence._
 - Given Android 13+ (API 33+) and `POST_NOTIFICATIONS` not granted, when activation is attempted, then the runtime permission prompt is requested via `ActivityResultContracts.RequestPermission()` (see US-R1-05).
 - Given Android 12 or below, when the app starts, then no runtime permission prompt is shown (channel suffices).
 - Given the user revokes notification permission while focus is active, when the foreground service tries to post, then the service does not crash; behavior degrades gracefully (notification not visible, but blocking still works via accessibility service).
