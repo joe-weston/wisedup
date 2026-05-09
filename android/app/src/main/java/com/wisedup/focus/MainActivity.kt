@@ -36,18 +36,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        // If focus is already active on resume, jump straight to FocusActivity.
-        // We don't block onCreate on this read — the flow-driven check in AppRoot also
-        // fires, and this guards against the race where the user backgrounds during
-        // onCreate composition.
-        val isActive = WisedUpApplication.get().focusStateRepository.let { repo ->
-            // Best-effort sync read: snapshot is bounded to 10s; here we use a small budget.
-            runCatching { repo.snapshot(timeoutMs = 500L) }.getOrNull()?.isActive ?: false
-        }
-        if (isActive) launchFocusActivity()
-    }
+    // Note: there is no onResume() snapshot read. The reactive LaunchedEffect on
+    // `app.focusStateRepository.isActive` in AppRoot fires whenever the flow re-emits,
+    // which covers the resume-after-background case without doing main-thread DataStore I/O.
 
     private fun launchFocusActivity() {
         startActivity(

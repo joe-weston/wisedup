@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -43,17 +42,6 @@ class FocusViewModel(
 
     private val _elapsedMs = MutableStateFlow(0L)
     val elapsedMs: StateFlow<Long> = _elapsedMs.asStateFlow()
-
-    /**
-     * Combined flag for the host activity: when state.isActive flips false, the host
-     * should call finish().
-     */
-    val shouldFinish: StateFlow<Boolean> = combine(state) { values -> !values[0].isActive }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000L),
-            initialValue = false,
-        )
 
     private var tickJob: Job? = null
 

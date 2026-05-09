@@ -17,7 +17,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -48,7 +50,7 @@ fun OnboardingScreen(
 
     // rememberSaveable mirrors the VM-held draft so a process death (rare for this flow)
     // doesn't lose the typed text. The VM is the source of truth at runtime.
-    var draft: String by rememberSaveable { androidx.compose.runtime.mutableStateOf(name) }
+    var draft: String by rememberSaveable { mutableStateOf(name) }
 
     Scaffold { padding ->
         Column(
