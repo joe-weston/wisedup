@@ -52,8 +52,11 @@ class FocusViewModel(
                 tickJob?.cancel()
                 if (focusState.isActive && focusState.startedAtMs != null) {
                     tickJob = viewModelScope.launch {
+                        // Defensive local: smart-cast on a mutable property doesn't survive across
+                        // the delay() suspension below, and Kotlin won't re-prove non-null on each
+                        // loop iteration. Capture once at lambda entry; bail if it's somehow null.
+                        val started = focusState.startedAtMs ?: return@launch
                         while (true) {
-                            val started = focusState.startedAtMs
                             _elapsedMs.value = (System.currentTimeMillis() - started)
                                 .coerceAtLeast(0L)
                             delay(1_000L)

@@ -9,6 +9,9 @@ import androidx.compose.ui.graphics.Color
 
 // Brand tokens — must match res/values/colors.xml.
 val FocusOffGreen = Color(0xFF1B873F)
+// Lighter green used only in the dark color scheme to clear WCAG AA's 4.5:1 floor;
+// ~9.1:1 against #121212 surface (vs. ~3.7:1 for FocusOffGreen on the same surface).
+val FocusOffGreenDark = Color(0xFF5BC97B)
 val FocusOffGreenContainer = Color(0xFFD2F5DC)
 val FocusActiveRed = Color(0xFFC8262C)
 val FocusActiveAmber = Color(0xFFE08A1A)
@@ -34,9 +37,9 @@ private val LightColors = lightColorScheme(
 )
 
 private val DarkColors = darkColorScheme(
-    primary = FocusOffGreen,
+    primary = FocusOffGreenDark,
     onPrimary = FocusActiveOn,
-    primaryContainer = FocusOffGreen,
+    primaryContainer = FocusOffGreenDark,
     onPrimaryContainer = FocusActiveOn,
     secondary = FocusActiveAmber,
     onSecondary = FocusActiveOn,

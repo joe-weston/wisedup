@@ -41,9 +41,9 @@ object FocusServiceController {
      * can run any cleanup before exit.
      */
     fun stop(context: Context) {
-        // Best-effort: try the explicit stop intent first; if the service is dead,
-        // this is a no-op. Either way, also call stopService for guaranteed teardown.
-        context.startService(stopIntent(context))
+        // Single-path teardown: stopService triggers onDestroy, which already cancels the
+        // notification and any in-flight cleanup. Avoids the prior dual start+stop, which
+        // could race against a freshly-bound foreground notification on slow devices.
         context.stopService(Intent(context, FocusForegroundService::class.java))
     }
 }
