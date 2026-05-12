@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-05-09T03:53:41.363Z",
+  "projectRoot": "/home/jwest/wisedup",
+  "structure": {
+    "hasPackageJson": false,
+    "hasTsConfig": false,
+    "hasClaudeConfig": true,
+    "hasClaudeFlow": true
+  },
+  "scannedAt": 1778298821363
+}

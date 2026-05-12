@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-05-09T03:43:36.937Z",
+  "mode": "headless",
+  "workerType": "optimize",
+  "model": "sonnet",
+  "durationMs": 1409,
+  "executionId": "optimize_1778298215528_mt9hd2",
+  "success": false,
+  "findings": {
+    "sections": [],
+    "codeBlocks": []
+  },
+  "rawOutputPreview": "Invalid API key · Fix external API key\n",
+  "rawOutputLength": 39
+}

@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-05-09T03:42:28.799Z",
+  "mode": "headless",
+  "workerType": "testgaps",
+  "model": "sonnet",
+  "durationMs": 1531,
+  "executionId": "testgaps_1778298147268_x6ab6q",
+  "success": false,
+  "findings": {
+    "sections": [],
+    "codeBlocks": []
+  },
+  "rawOutputPreview": "Invalid API key · Fix external API key\n",
+  "rawOutputLength": 39
+}
