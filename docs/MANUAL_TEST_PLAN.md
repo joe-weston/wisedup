@@ -224,3 +224,58 @@ When all five sections pass, QA records the following on the R1 PR:
       ADR-002 risk #1).
 
 Once all boxes are ticked, the PM gates R1 → R2.
+
+> **R2 note:** The R1 checklist above assumes an R1-only build with no network stack.
+> The merged app adds `INTERNET` for Supabase (MISSION.md Release 2). Use the **Release 2**
+> section below for R2 QA; the R1 bullets remain the bar for a hypothetical R1-only APK audit.
+
+---
+
+## Release 2 — Compliance logging (MISSION.md + RELEASES-R2.md)
+
+**Audience:** QA validating R2 acceptance criteria before PM gates R2 → R3.
+
+**Prerequisites**
+
+- Supabase project with migration [supabase/migrations/20260512120000_r2_compliance_logging.sql](supabase/migrations/20260512120000_r2_compliance_logging.sql) applied.
+- `local.properties` on the build machine contains `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (Supabase publishable key only — never `service_role`).
+- A known school row exists (seed `DEMO-001` from the migration, or your own `schools` row).
+
+### R2-1 — School registration
+
+1. Fresh install (clear app data).
+2. Complete onboarding with a display name.
+3. **Expected:** “Connect to your school” appears.
+4. Enter `DEMO-001`, tap **Save and continue**.
+5. **Expected:** Home screen appears; Supabase `students` contains a row whose `id` matches DataStore `student.id` (UUID from onboarding).
+
+### R2-2 — Online focus events (< 5 s)
+
+1. With network on, activate Focus, wait 2 s, exit Focus.
+2. **Expected:** Within 5 s, `focus_sessions` shows a row with matching `client_session_id` pattern (UUID), non-null `started_at`, and `ended_at` + `duration_seconds` populated after exit.
+
+### R2-3 — Offline queue
+
+1. Enable airplane mode.
+2. Activate and exit Focus once (or repeat twice).
+3. Disable airplane mode; wait up to 1 minute (WorkManager backoff).
+4. **Expected:** All corresponding `focus_sessions` rows appear without duplicates beyond idempotent RPC behavior.
+
+### R2-4 — Bypass event
+
+1. With focus active, open system Settings → Accessibility → disable **WizedUp Focus** service.
+2. **Expected:** `bypass_events` gains a row with `event_type = accessibility_disabled` linked to the active session when possible.
+
+### R2-5 — RLS / no peer reads
+
+1. From SQL editor or REST as `anon`, attempt `select * from focus_sessions limit 1` (direct table select).
+2. **Expected:** permission denied / empty per revoked grants; writes succeed only via RPC with valid `sync_token`.
+
+### R2 sign-off checklist
+
+- [ ] R2-1–R2-5 passed on a device or emulator with a real Supabase project.
+- [ ] `aapt dump permissions` shows `INTERNET` (expected for R2); no `service_role` or MDM permissions added.
+- [ ] Payload inspection: no app content, contacts, or URLs beyond Supabase host + RPC paths.
+
+When all boxes are ticked, the PM gates R2 → R3 per MISSION.md.
+

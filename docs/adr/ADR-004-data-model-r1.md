@@ -65,7 +65,7 @@ data class FocusState(val isActive: Boolean, val startedAtMs: Long?)
 - Five keys total. Auditable in one screen.
 - DataStore Preferences is async-safe, type-safe (via key helpers), and survives process death.
 - No schema migration needed for R1 because there is effectively no schema — just keys.
-- `student.id` as UUIDv4 means R2 can register the existing student into Supabase without re-keying. The Supabase `students.id` can either accept the same UUID or store the local UUID as `device_id`. Decision deferred to ADR-005 (R2).
+- `student.id` as UUIDv4 means R2 can register the existing student into Supabase without re-keying. The Supabase `students.id` is the same UUID; see [ADR-005](ADR-005-r2-compliance-logging.md).
 - Adding R2's event log is additive: introduce Room with `focus_sessions` and `bypass_events` tables, leave the DataStore prefs untouched. No data migration; no destructive change.
 
 ### Negative

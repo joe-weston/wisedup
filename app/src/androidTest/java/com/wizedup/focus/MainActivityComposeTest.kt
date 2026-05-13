@@ -19,6 +19,11 @@ class MainActivityComposeTest {
         composeRule.waitForIdle()
         val welcome = composeRule.activity.getString(R.string.onboarding_title)
         val activate = composeRule.activity.getString(R.string.home_activate_button)
-        composeRule.onNode(hasText(welcome).or(hasText(activate))).assertIsDisplayed()
+        val schoolTitle = composeRule.activity.getString(R.string.school_registration_title)
+        composeRule.onNode(
+            hasText(welcome)
+                .or(hasText(activate))
+                .or(hasText(schoolTitle)),
+        ).assertIsDisplayed()
     }
 }

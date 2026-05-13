@@ -26,9 +26,11 @@ internal val Context.wizedupDataStore: DataStore<Preferences> by preferencesData
 data class FocusState(
     val isActive: Boolean,
     val startedAtMs: Long?,
+    /** Client-generated session id while active; see ADR-005. */
+    val clientSessionId: String?,
 ) {
     companion object {
-        val Inactive = FocusState(isActive = false, startedAtMs = null)
+        val Inactive = FocusState(isActive = false, startedAtMs = null, clientSessionId = null)
     }
 }
 
@@ -53,9 +55,11 @@ class FocusStateRepository(
         .map { prefs ->
             val isActive = prefs[PreferencesKeys.FOCUS_IS_ACTIVE] ?: false
             val startedAt = prefs[PreferencesKeys.FOCUS_STARTED_AT_MS] ?: 0L
+            val sessionId = prefs[PreferencesKeys.FOCUS_CLIENT_SESSION_ID]?.takeIf { it.isNotBlank() }
             FocusState(
                 isActive = isActive,
                 startedAtMs = if (startedAt > 0L) startedAt else null,
+                clientSessionId = sessionId,
             )
         }
         .distinctUntilChanged()
@@ -69,6 +73,7 @@ class FocusStateRepository(
         dataStore.edit { prefs ->
             prefs[PreferencesKeys.FOCUS_IS_ACTIVE] = true
             prefs[PreferencesKeys.FOCUS_STARTED_AT_MS] = nowMs
+            prefs[PreferencesKeys.FOCUS_CLIENT_SESSION_ID] = UUID.randomUUID().toString()
         }
     }
 
@@ -78,6 +83,7 @@ class FocusStateRepository(
         dataStore.edit { prefs ->
             prefs[PreferencesKeys.FOCUS_IS_ACTIVE] = false
             prefs[PreferencesKeys.FOCUS_STARTED_AT_MS] = 0L
+            prefs.remove(PreferencesKeys.FOCUS_CLIENT_SESSION_ID)
         }
     }
 

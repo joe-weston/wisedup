@@ -17,11 +17,13 @@ import com.wizedup.focus.ui.home.HomeScreen
 import com.wizedup.focus.ui.home.HomeViewModel
 import com.wizedup.focus.ui.onboarding.OnboardingScreen
 import com.wizedup.focus.ui.onboarding.OnboardingViewModel
+import com.wizedup.focus.ui.registration.SchoolRegistrationScreen
+import com.wizedup.focus.ui.registration.SchoolRegistrationViewModel
 import com.wizedup.focus.ui.theme.WizedUpTheme
 import com.wizedup.focus.util.FocusDiag
 
 /**
- * Single-activity host. Routes to OnboardingScreen if no profile, otherwise HomeScreen.
+ * Single-activity host. Routes Onboarding → School registration (R2) → Home.
  * If the persisted focus flag is `true` on entry, we relaunch [FocusActivity] so a user
  * who somehow lands on the home screen during an active session is bounced back to the
  * lock surface. (Normal active-session paths never go through MainActivity.)
@@ -64,6 +66,10 @@ private fun AppRoot(
     val profileFlow = app.studentProfileRepository.profile
     val profileState: StudentProfile? by profileFlow.collectAsStateWithLifecycle(initialValue = null)
 
+    val schoolRegistered: Boolean by app.schoolRegistrationRepository.isRegistered.collectAsStateWithLifecycle(
+        initialValue = false,
+    )
+
     // Reactive jump to FocusActivity if the flag flips on.
     val isActive: Boolean by app.focusStateRepository.isActive.collectAsStateWithLifecycle(
         initialValue = false,
@@ -75,6 +81,16 @@ private fun AppRoot(
 
     if (profileState == null) {
         OnboardingScreen(viewModel = viewModel { OnboardingViewModel(app.studentProfileRepository) })
+    } else if (!schoolRegistered) {
+        SchoolRegistrationScreen(
+            profile = profileState!!,
+            viewModel = viewModel {
+                SchoolRegistrationViewModel(
+                    schoolRepo = app.schoolRegistrationRepository,
+                    studentRepo = app.studentProfileRepository,
+                )
+            },
+        )
     } else {
         HomeScreen(
             profile = profileState!!,

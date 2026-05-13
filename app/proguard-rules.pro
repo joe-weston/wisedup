@@ -23,6 +23,10 @@
 # AndroidX lifecycle
 -keep class androidx.lifecycle.** { *; }
 
-# Coroutines stack-trace recovery (helpful for crash reports if added later).
--keepattributes SourceFile,LineNumberTable
--renamesourcefileattribute SourceFile
+# Ktor + kotlinx.serialization (R2 Supabase RPC)
+-dontwarn io.ktor.**
+-keep class kotlinx.serialization.json.** { *; }
+
+# WorkManager (R2 outbox sync)
+-keep class androidx.work.** { *; }
+-keep class com.wizedup.focus.sync.OutboxSyncWorker { *; }

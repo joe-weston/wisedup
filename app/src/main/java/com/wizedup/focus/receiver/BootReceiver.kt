@@ -53,6 +53,11 @@ class BootReceiver : BroadcastReceiver() {
                     // allows. Per locked PM decision #3, no toast / no banner.
                     FocusServiceController.start(context, fromBootResume = true)
                 }
+                try {
+                    WizedUpApplication.get().scheduleComplianceSyncIfNeeded()
+                } catch (_: Throwable) {
+                    // Defensive: never crash the receiver if Application wiring is unavailable.
+                }
             } finally {
                 pendingResult.finish()
             }

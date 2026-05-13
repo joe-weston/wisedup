@@ -4,19 +4,32 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import androidx.room.Room
+import com.wizedup.focus.compliance.ComplianceBypassReporter
+import com.wizedup.focus.compliance.ComplianceCoordinator
 import com.wizedup.focus.data.FocusStateRepository
+import com.wizedup.focus.data.SchoolRegistrationRepository
 import com.wizedup.focus.data.StudentProfileRepository
+import com.wizedup.focus.data.remote.SupabaseRestClient
+import com.wizedup.focus.data.sync.OutboxRepository
+import com.wizedup.focus.data.sync.SyncWorkScheduler
+import com.wizedup.focus.data.sync.WizedUpDatabase
 import com.wizedup.focus.data.wizedupDataStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * Application entry point.
  *
  * Manual DI per the engineering brief — Hilt is intentionally NOT used in R1 to keep the
- * surface area small. R2 may refactor to Hilt when the network/sync layer multiplies the
- * graph. For now the two repositories are exposed as `lateinit` singletons accessible
- * via [WizedUpApplication.instance] from non-DI components (services, receivers).
+ * surface area small. R2 adds Room + WorkManager + Supabase RPC wiring without a DI
+ * framework; see ADR-005.
  */
 class WizedUpApplication : Application() {
+
+    val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     lateinit var focusStateRepository: FocusStateRepository
         private set
@@ -24,17 +37,67 @@ class WizedUpApplication : Application() {
     lateinit var studentProfileRepository: StudentProfileRepository
         private set
 
+    lateinit var schoolRegistrationRepository: SchoolRegistrationRepository
+        private set
+
+    lateinit var outboxRepository: OutboxRepository
+        private set
+
+    var supabaseRestClient: SupabaseRestClient? = null
+        private set
+
+    private lateinit var roomDatabase: WizedUpDatabase
+    private lateinit var complianceCoordinator: ComplianceCoordinator
+
     override fun onCreate() {
         super.onCreate()
         instance = this
 
-        // Wire the DataStore-backed repositories. The DataStore singleton itself is
-        // declared as a Context extension; this is the first read, so the file is
-        // lazily created on first call.
         focusStateRepository = FocusStateRepository(wizedupDataStore)
         studentProfileRepository = StudentProfileRepository(wizedupDataStore)
 
+        roomDatabase = Room.databaseBuilder(this, WizedUpDatabase::class.java, "wizedup_room.db")
+            .fallbackToDestructiveMigration()
+            .build()
+        outboxRepository = OutboxRepository(this, roomDatabase.pendingSyncDao())
+        supabaseRestClient = SupabaseRestClient.fromBuildConfig()
+        schoolRegistrationRepository = SchoolRegistrationRepository(
+            appContext = this,
+            dataStore = wizedupDataStore,
+            supabase = supabaseRestClient,
+        )
+
+        complianceCoordinator = ComplianceCoordinator(
+            scope = applicationScope,
+            focusRepo = focusStateRepository,
+            schoolRepo = schoolRegistrationRepository,
+            outbox = outboxRepository,
+            backendConfigured = { supabaseRestClient != null },
+        )
+        complianceCoordinator.start()
+
         createNotificationChannel()
+    }
+
+    /** Called when the accessibility service unbinds while focus may still be active (ADR-002 / R2). */
+    fun enqueueAccessibilityBypassIfNeeded() {
+        applicationScope.launch {
+            ComplianceBypassReporter.reportAccessibilityDisabled(
+                focusRepo = focusStateRepository,
+                schoolRepo = schoolRegistrationRepository,
+                outbox = outboxRepository,
+                backendConfigured = supabaseRestClient != null,
+            )
+        }
+    }
+
+    /** Best-effort: drain any pending compliance rows after reboot (R2 offline queue). */
+    fun scheduleComplianceSyncIfNeeded() {
+        applicationScope.launch {
+            if (supabaseRestClient != null && schoolRegistrationRepository.isRegisteredSnapshot()) {
+                SyncWorkScheduler.schedule(this@WizedUpApplication)
+            }
+        }
     }
 
     /**
