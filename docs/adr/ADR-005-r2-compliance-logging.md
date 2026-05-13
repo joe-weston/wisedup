@@ -40,7 +40,7 @@ Foreground “escape” relaunches are **not** logged as bypasses—they are nor
 
 ### 4. Authentication model (no JWT custom claims)
 
-The `anon` Supabase key is shipped in the client (normal Supabase pattern) but **direct table access from `anon` is revoked**. All student writes go through **`SECURITY DEFINER` RPCs** that:
+The **Supabase publishable** API key is shipped in the client (same privilege model as the legacy “anon” key; normal Supabase pattern) but **direct table access from the `anon` Postgres role is revoked**. All student writes go through **`SECURITY DEFINER` RPCs** that:
 
 1. Validate a **per-student `sync_token`** returned once from `register_student`, stored as **`crypt(..., gen_salt('bf'))`** in `students.sync_token_hash`.
 2. Re-verify `student_id` + `sync_token` + (where applicable) `school_id` on every subsequent RPC.
@@ -66,14 +66,14 @@ The Android app persists `school_id` + `sync_token` in DataStore next to existin
 
 ### 7. Sync transport
 
-- **WorkManager** (`UniqueWork` + backoff) drains the Room outbox by invoking PostgREST **`/rpc/<function>`** via **supabase-kt** (`Postgrest` plugin). Registration itself runs **inline** in the registration ViewModel (not outboxed) so the user gets immediate error feedback.
+- **WorkManager** (`UniqueWork` + backoff) drains the Room outbox by invoking PostgREST **`/rpc/<function>`** via **Ktor** ([`SupabaseRestClient`](../../app/src/main/java/com/wizedup/focus/data/remote/SupabaseRestClient.kt)) using `BuildConfig.SUPABASE_URL` and `BuildConfig.SUPABASE_PUBLISHABLE_KEY` (from `local.properties`). Registration itself runs **inline** in the registration ViewModel (not outboxed) so the user gets immediate error feedback.
 
 ## Consequences
 
 ### Positive
 
 - **No peer reads** from the student app: RLS + revoked table grants mean even a curious student cannot `select` classmates’ sessions via REST.
-- **No service role in APK**; compromise of `anon` key alone does not grant bulk read/write to session history without per-student `sync_token`.
+- **No service role in APK**; compromise of the **publishable** key alone does not grant bulk read/write to session history without per-student `sync_token`.
 - **Clear mapping** from ADR-004 `student.id` to `students.id`.
 
 ### Negative
