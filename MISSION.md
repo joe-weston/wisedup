@@ -104,6 +104,8 @@ bypass_events   (id, student_id, session_id, event_type, timestamp)
 - [ ] All charts accurate against raw Supabase data
 - [ ] CSV export includes all displayed fields
 
+**Compliance % (R3):** Session-based rate — share of enrolled students with ≥1 **completed** focus session (`ended_at` set, `duration_seconds >= 60`) per UTC calendar day or **week bucket (Monday-start, UTC)**; see [docs/adr/ADR-006-r3-admin-dashboard.md](docs/adr/ADR-006-r3-admin-dashboard.md).
+
 ---
 
 ## Release 4 — iOS Port

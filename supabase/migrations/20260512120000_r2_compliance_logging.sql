@@ -1,6 +1,8 @@
 -- R2: schools, students, focus_sessions, bypass_events + SECURITY DEFINER RPCs.
 -- See docs/adr/ADR-005-r2-compliance-logging.md
 
+-- pgcrypto: on Supabase it usually lives in schema `extensions`; SECURITY DEFINER RPCs
+-- that use crypt()/gen_salt() must include `extensions` in search_path (42883 otherwise).
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- ---------------------------------------------------------------------------
@@ -111,7 +113,7 @@ CREATE OR REPLACE FUNCTION public._student_sync_ok(
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
     SELECT EXISTS (
         SELECT 1
@@ -133,7 +135,7 @@ CREATE OR REPLACE FUNCTION public.register_student(
 ) RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
     v_school public.schools%ROWTYPE;
