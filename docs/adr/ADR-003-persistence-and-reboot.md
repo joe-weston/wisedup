@@ -18,22 +18,22 @@ Survival surfaces we must handle:
 
 Relevant Android constraints:
 - `BOOT_COMPLETED` is delivered to apps that have been launched at least once since install (since Android 3.1). Onboarding launch satisfies this.
-- Background activity launches are restricted (Android 10+). We need a path that the system accepts: foreground service notification → user taps notification → activity launches; or the accessibility service callback launches the activity once it rebinds.
+- Background activity launches are restricted (Android 10+). We need paths the system accepts: foreground-service notification → user taps notification → activity launches; optional `startActivity` from the FGS immediately after `startForeground` when BAL allows; or the accessibility service callback launches the activity once it rebinds.
 - `AccessibilityService` is automatically restarted by the system after reboot if it was enabled, but rebind can lag 5–30 seconds.
 
 ## Decision
 
-**Persist focus state in DataStore Preferences. On `BOOT_COMPLETED`, a `BootReceiver` reads the flag and starts `FocusForegroundService`, which posts a high-priority "Focus Mode is active — tap to resume" notification. The accessibility service rebinds independently and resumes lock-screen relaunches as soon as it does.**
+**Persist focus state in DataStore Preferences. On `BOOT_COMPLETED`, a `BootReceiver` reads the flag and starts `FocusForegroundService` with a boot-resume extra when `is_active=true`. The service calls `startForeground` within 5 s and posts an ongoing notification on the `focus_mode` channel at `IMPORTANCE_LOW` (product choice: passive status indicator; see `WizedUpApplication`). After `startForeground`, the service may also start `FocusActivity` directly on the main thread when the OS allows background activity launch from a foreground service (tightens UX; notification tap remains the fallback). The accessibility service rebinds independently and resumes lock-screen relaunches as soon as it does.**
 
 Sequence on reboot when `is_active=true`:
 
 1. Device boots.
 2. System delivers `android.intent.action.BOOT_COMPLETED` to `BootReceiver`.
 3. `BootReceiver` reads `is_active` from DataStore (synchronous-blocking read inside a `goAsync()` block, ≤ 10 s budget).
-4. If active, calls `ContextCompat.startForegroundService(ctx, Intent(ctx, FocusForegroundService::class.java))`.
-5. `FocusForegroundService.onStartCommand` calls `startForeground(NOTIF_ID, buildNotification())` within 5 s. Notification is `IMPORTANCE_HIGH`, ongoing, non-dismissible (`setOngoing(true)`), with content intent → `FocusActivity`.
+4. If active, calls `ContextCompat.startForegroundService` with an intent that includes `EXTRA_FROM_BOOT_RESUME=true` (`FocusServiceController.start`).
+5. `FocusForegroundService.onStartCommand` calls `startForeground(NOTIF_ID, buildNotification())` within 5 s. Notification is ongoing, non-dismissible (`setOngoing(true)`), with content intent → `FocusActivity`. When the start intent carries the boot-resume extra and focus is still active after verification, the service posts `startActivity(FocusActivity)` on the main looper.
 6. As soon as `FocusAccessibilityService` rebinds (system-driven), it resumes the relaunch loop from ADR-002.
-7. Bridging gap (boot → accessibility rebind): the persistent notification is the user's tappable resume path. If the student opens any app in this window, the lock activity launches when accessibility binds; if they tap the notification, it launches immediately.
+7. Bridging gap (boot → accessibility rebind): the persistent notification is always available. If BAL blocks the direct activity start on some OEMs, the student taps the notification or opens any app; the lock activity reasserts when accessibility binds.
 
 Repository contract:
 ```kotlin
@@ -60,12 +60,13 @@ interface FocusStateRepository {
 - `FOREGROUND_SERVICE_SPECIAL_USE` requires manifest `<property>` justification on Android 14+. Document the focus-enforcement use case.
 
 ### Neutral
-- Notification channel `focus_mode` must be created on first launch with `IMPORTANCE_HIGH`. User can downgrade it; we accept that.
+- Notification channel `focus_mode` is created on first launch at `IMPORTANCE_LOW` (no heads-up spam for an always-on indicator). User can raise importance in system settings; we accept that.
 
 ## Edge Cases
 
 | Case | Behavior |
 |------|----------|
+| BAL blocks `startActivity` from FGS on an OEM | Notification + accessibility relaunch paths still apply; no crash. |
 | Reboot while `is_active=false` | `BootReceiver` reads flag, no-ops. |
 | Airplane mode | No effect. R1 has no network. Verify no `ConnectivityManager` calls in hot path. |
 | Battery saver / Doze | Foreground service is exempt from Doze. Accessibility service is exempt while bound. Safe. |

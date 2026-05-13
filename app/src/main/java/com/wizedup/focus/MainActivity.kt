@@ -6,8 +6,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wizedup.focus.data.StudentProfile
 import com.wizedup.focus.ui.focus.FocusActivity
@@ -27,6 +29,7 @@ import com.wizedup.focus.util.FocusDiag
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         setContent {
             WizedUpTheme {
@@ -57,12 +60,14 @@ class MainActivity : ComponentActivity() {
 private fun AppRoot(
     onActivateFocus: () -> Unit,
 ) {
-    val app = (androidx.compose.ui.platform.LocalContext.current.applicationContext) as WizedUpApplication
+    val app = (LocalContext.current.applicationContext) as WizedUpApplication
     val profileFlow = app.studentProfileRepository.profile
-    val profileState: StudentProfile? by profileFlow.collectAsState(initial = null)
+    val profileState: StudentProfile? by profileFlow.collectAsStateWithLifecycle(initialValue = null)
 
     // Reactive jump to FocusActivity if the flag flips on.
-    val isActive: Boolean by app.focusStateRepository.isActive.collectAsState(initial = false)
+    val isActive: Boolean by app.focusStateRepository.isActive.collectAsStateWithLifecycle(
+        initialValue = false,
+    )
     LaunchedEffect(isActive) {
         FocusDiag.d("MainActivity.AppRoot LaunchedEffect(isActive) -> $isActive")
         if (isActive) onActivateFocus()

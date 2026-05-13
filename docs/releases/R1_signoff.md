@@ -53,14 +53,27 @@ All five MISSION.md criteria were validated by QA against the implemented code.
 
 - **US-R1-09 notification importance:** changed from `IMPORTANCE_HIGH` → `IMPORTANCE_LOW`. Heads-up banners over the lock screen for an always-on indicator are hostile UX. Behavioral enforcement is the AccessibilityService relaunch loop; the notification is a passive status indicator. Story file annotated with the dated rationale.
 
+## R1.1 completion polish (2026-05-12)
+
+Follow-up engineering to align the public release notes with shipped behavior and close obvious gaps:
+
+- [RELEASES-R1.md](../../RELEASES-R1.md) and [MISSION.md](../../MISSION.md): how “≤ 2 taps” is measured; R1 limitations (Settings disable accessibility; reboot bridge).
+- Splash: AndroidX `core-splashscreen`, `Theme.WizedUpFocus.Splash`, `installSplashScreen()` in `MainActivity`.
+- Copy: lock screen shows “Focus Active” plus “You're focused”; onboarding uses “Name or student ID”.
+- Reboot UX: `BootReceiver` starts the foreground service with `EXTRA_FROM_BOOT_RESUME`; `FocusForegroundService` may call `startActivity(FocusActivity)` after `startForeground` when focus is still active (BAL-dependent; notification path unchanged).
+- Compose: `collectAsStateWithLifecycle` for repository-backed flows.
+- Tests: `HomeViewModelTest`, `FocusViewModelTest`; extended `FocusServiceControllerTest`; instrumentation `MainActivityComposeTest`.
+- CI: [.github/workflows/android.yml](../../.github/workflows/android.yml) runs `testDebugUnitTest` and `assembleDebug`.
+- Docs: [ADR-003](../adr/ADR-003-persistence-and-reboot.md) and [MANUAL_TEST_PLAN.md](../MANUAL_TEST_PLAN.md) Section 3 updated for the above.
+
 ## R2 carry-overs (non-blocking, deliberately deferred)
 
 The QA review surfaced six concerns that are carried forward, not blockers for R1:
 
-1. **Cold-launch-into-active-state flicker** — when a user opens the app icon while focus is already active, MainActivity briefly shows OnboardingScreen → HomeScreen before LaunchedEffect routes to FocusActivity (~200 ms flicker, AccessibilityService reasserts on top within the same window). The boot-resume path is unaffected because users tap the persistent notification, not the icon. Visible flicker, not a correctness failure.
-2. **No unit tests for `FocusViewModel`, `HomeViewModel`, or `BootReceiver`** — DataStore repository and FocusServiceController are covered. Add coverage in R2 hardening pass; instrumentation tests can run there too once a CI runner with the SDK is in place.
+1. **Cold-launch-into-active-state flicker** — when a user opens the app icon while focus is already active, MainActivity briefly shows OnboardingScreen → HomeScreen before LaunchedEffect routes to FocusActivity (~200 ms flicker, AccessibilityService reasserts on top within the same window). Visible flicker, not a correctness failure.
+2. **ViewModel / instrumentation depth** — `HomeViewModelTest`, `FocusViewModelTest`, and `MainActivityComposeTest` now exist; deeper UI coverage (activate flow with accessibility granted, exit dialog) remains for R2 hardening.
 3. **Notification shade triggers a brief FocusActivity relaunch (~500 ms flicker)** — `FocusAccessibilityService` does not special-case `com.android.systemui`. Per US-R1-08, treating the shade like any other foreground change is correct (otherwise notifications become a bypass vector); document the flicker in the user-facing FAQ rather than code-around it.
-4. **No CI / no executable build verification on this branch** — there is no Android SDK or JDK in the build environment. Stand up GitHub Actions with `setup-java` + `gradle/gradle-build-action` in R2. All R1 review was code-based.
+4. **CI scope** — GitHub Actions runs JVM unit tests + `assembleDebug`. Connected `androidTest` / emulator matrix is not in CI yet (add in R2 if needed).
 5. **OEM battery-killer testing** — Architect flagged Xiaomi/Huawei/OnePlus/Samsung Deep Sleep as risks. Field-test one device per OEM during R2 (when there's also a backend to receive telemetry from those tests).
 6. **Play Store accessibility-use disclosure** — out-of-app deliverable. Required before any public release; for pilot schools, side-load APK distribution is acceptable. Owner: PM, due before R3 (admin dashboard would imply public availability).
 

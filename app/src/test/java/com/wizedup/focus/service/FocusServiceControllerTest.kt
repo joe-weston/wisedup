@@ -4,7 +4,6 @@ import android.content.Context
 import com.google.common.truth.Truth.assertThat
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.verify
 import org.junit.Test
 
@@ -29,6 +28,21 @@ class FocusServiceControllerTest {
             FocusForegroundService::class.java.name,
         )
         assertThat(intent.action).isEqualTo(FocusForegroundService.ACTION_START)
+        assertThat(
+            intent.getBooleanExtra(FocusForegroundService.EXTRA_FROM_BOOT_RESUME, false),
+        ).isFalse()
+    }
+
+    @Test
+    fun `startIntent with bootResume sets extra`() {
+        val ctx = mockk<Context>(relaxed = true)
+        every { ctx.packageName } returns "com.wizedup.focus.test"
+
+        val intent = FocusServiceController.startIntent(ctx, fromBootResume = true)
+
+        assertThat(
+            intent.getBooleanExtra(FocusForegroundService.EXTRA_FROM_BOOT_RESUME, false),
+        ).isTrue()
     }
 
     @Test
@@ -45,17 +59,18 @@ class FocusServiceControllerTest {
     }
 
     @Test
-    fun `stop sends the stop intent and then stopService`() {
+    fun `stop calls stopService`() {
         val ctx = mockk<Context>(relaxed = true)
         every { ctx.packageName } returns "com.wizedup.focus.test"
 
-        val captured = slot<android.content.Intent>()
-        every { ctx.startService(capture(captured)) } returns null
-
         FocusServiceController.stop(ctx)
 
-        verify(exactly = 1) { ctx.startService(any()) }
-        verify(exactly = 1) { ctx.stopService(any()) }
-        assertThat(captured.captured.action).isEqualTo(FocusForegroundService.ACTION_STOP)
+        verify(exactly = 1) {
+            ctx.stopService(
+                match {
+                    it.component?.className == FocusForegroundService::class.java.name
+                },
+            )
+        }
     }
 }

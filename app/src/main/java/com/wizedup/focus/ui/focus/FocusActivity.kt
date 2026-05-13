@@ -6,7 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,9 +59,9 @@ class FocusActivity : ComponentActivity() {
                     )
                 }
 
-                val state by vm.state.collectAsState()
-                val profile by vm.profile.collectAsState()
-                val elapsed by vm.elapsedMs.collectAsState()
+                val state by vm.state.collectAsStateWithLifecycle()
+                val profile by vm.profile.collectAsStateWithLifecycle()
+                val elapsed by vm.elapsedMs.collectAsStateWithLifecycle()
 
                 // [FocusViewModel.state] uses stateIn(initialValue = Inactive). The first
                 // composition therefore sees isActive=false *before* DataStore has emitted,

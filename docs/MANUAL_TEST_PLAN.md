@@ -26,7 +26,7 @@ assumes the app is installed but state-fresh.
 
 ### Steps (first launch)
 1. Tap the WizedUp Focus icon.
-2. Onboarding screen appears: title "Welcome to WizedUp", a "Your name" field, "Continue"
+2. Onboarding screen appears: title "Welcome to WizedUp", a "Name or student ID" field, "Continue"
    disabled.
 3. Type "Alex M.". Continue enables.
 4. Tap **Continue**. Home screen appears: greeting "Hey, Alex M.", green "Focus Off"
@@ -96,16 +96,22 @@ assumes the app is installed but state-fresh.
    - Emulator: `adb reboot` (or use the AVD's "Cold boot" menu).
    - Physical: hold power → Restart, or `adb reboot` over USB.
 2. Wait for boot to complete and unlock the device.
-3. Within 10 seconds of unlock, pull the notification shade. The "Focus Mode active"
+3. **Resume UX:** The app may bring the red **Focus Active** screen forward automatically once
+   the foreground service starts (boot-resume path). If it does not (OEM / timing), use the
+   notification in the next step.
+4. Within 10 seconds of unlock, pull the notification shade. The "Focus Mode active"
    notification should be visible.
-4. Tap the notification → FocusActivity opens.
-5. From the launcher, attempt to open another app (e.g. Calculator). The first attempt
+5. If you are not already on FocusActivity, tap the notification → FocusActivity opens.
+6. From the launcher, attempt to open another app (e.g. Calculator). The first attempt
    may succeed for ~5–30 s while the AccessibilityService is rebinding; subsequent
    attempts are blocked by the relaunch loop.
 
 ### Expected
 - `is_active` is true after the reboot read.
 - ForegroundService starts within 10 s of `BOOT_COMPLETED`.
+- **Optional:** FocusActivity may appear automatically after unlock (no tap required) when
+  the OS allows a start from the foreground service; otherwise the persistent notification
+  remains the explicit resume path.
 - Notification is ongoing and tappable.
 - AccessibilityService rebinds within ~30 s and resumes the relaunch loop.
 - Per locked PM decision #3, NO toast / NO banner appears — only the persistent
