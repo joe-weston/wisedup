@@ -12,7 +12,7 @@ npm install
 Copy `.env.example` to `.env.local` and set:
 
 - `NEXT_PUBLIC_SUPABASE_URL` — project URL  
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — **anon** publishable key (never use `service_role` in the browser)
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — same **publishable** API key as Android `SUPABASE_PUBLISHABLE_KEY` in `local.properties` (Supabase dashboard: publishable / legacy anon; never use `service_role` in the browser)
 
 ```bash
 npm run dev
