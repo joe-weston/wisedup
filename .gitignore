@@ -1,0 +1,17 @@
+*.iml
+.gradle
+/local.properties
+.idea/
+.DS_Store
+/build
+app/build/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Claude Code & swarm tooling state (per-user, not portable)
+.claude/
+.claude-flow/
+.swarm/
+.mcp.json
