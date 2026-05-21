@@ -16,9 +16,12 @@ import androidx.core.content.ContextCompat
 object FocusServiceController {
 
     /** Build the Intent that starts the foreground service. Public for testability. */
-    fun startIntent(context: Context): Intent =
+    fun startIntent(context: Context, fromBootResume: Boolean = false): Intent =
         Intent(context, FocusForegroundService::class.java).apply {
             action = FocusForegroundService.ACTION_START
+            if (fromBootResume) {
+                putExtra(FocusForegroundService.EXTRA_FROM_BOOT_RESUME, true)
+            }
         }
 
     /** Build the Intent that asks the service to stop itself. */
@@ -31,8 +34,8 @@ object FocusServiceController {
      * Start the foreground service, honoring Android-O+ rules.
      * Safe to call repeatedly — the service is single-instance.
      */
-    fun start(context: Context) {
-        ContextCompat.startForegroundService(context, startIntent(context))
+    fun start(context: Context, fromBootResume: Boolean = false) {
+        ContextCompat.startForegroundService(context, startIntent(context, fromBootResume))
     }
 
     /**

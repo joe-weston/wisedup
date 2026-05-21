@@ -15,7 +15,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -44,8 +44,8 @@ fun OnboardingScreen(
     viewModel: OnboardingViewModel,
     onContinueComplete: () -> Unit = {},
 ) {
-    val name: String by viewModel.name.collectAsState()
-    val isSubmitting: Boolean by viewModel.isSubmitting.collectAsState()
+    val name: String by viewModel.name.collectAsStateWithLifecycle()
+    val isSubmitting: Boolean by viewModel.isSubmitting.collectAsStateWithLifecycle()
     val continueEnabled = name.trim().isNotEmpty() && !isSubmitting
 
     // rememberSaveable mirrors the VM-held draft so a process death (rare for this flow)

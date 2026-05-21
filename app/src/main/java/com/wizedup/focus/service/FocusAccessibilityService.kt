@@ -109,6 +109,11 @@ class FocusAccessibilityService : AccessibilityService() {
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
+        try {
+            WizedUpApplication.get().enqueueAccessibilityBypassIfNeeded()
+        } catch (_: Throwable) {
+            // App may not be initialized in pathological test harnesses.
+        }
         scope.cancel()
         return super.onUnbind(intent)
     }

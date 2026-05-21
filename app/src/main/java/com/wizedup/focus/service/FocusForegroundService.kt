@@ -6,7 +6,9 @@ import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 import com.wizedup.focus.R
 import com.wizedup.focus.WizedUpApplication
@@ -53,8 +55,10 @@ class FocusForegroundService : Service() {
             else -> {
                 // ACTION_START or null (system restart) — ensure the notification is up,
                 // then verify state. If state says inactive, self-stop.
+                val fromBootResume =
+                    intent?.getBooleanExtra(EXTRA_FROM_BOOT_RESUME, false) == true
                 startForegroundCompat(buildNotification())
-                verifyStateOrStop()
+                verifyStateOrStop(fromBootResume = fromBootResume)
             }
         }
         return START_STICKY
@@ -71,15 +75,31 @@ class FocusForegroundService : Service() {
      * If the OS restarts us after a memory kill but the user has since deactivated focus,
      * self-stop. This is a defensive read of the persisted flag.
      */
-    private fun verifyStateOrStop(): Job = scope.launch {
+    private fun verifyStateOrStop(fromBootResume: Boolean = false): Job = scope.launch {
         val isActive = WizedUpApplication.get()
             .focusStateRepository
             .isActive
             .first()
-        FocusDiag.d("FGS verifyStateOrStop isActive=$isActive")
+        FocusDiag.d("FGS verifyStateOrStop isActive=$isActive fromBootResume=$fromBootResume")
         if (!isActive) {
             FocusDiag.d("FGS verifyStateOrStop -> stopForegroundAndSelf")
             stopForegroundAndSelf()
+            return@launch
+        }
+        if (fromBootResume) {
+            // After startForeground, the app has a foreground service; starting the lock
+            // activity here tightens reboot UX. OEMs may still block (BAL); notification tap
+            // remains the fallback (ADR-003).
+            Handler(Looper.getMainLooper()).post {
+                FocusDiag.d("FGS boot-resume -> startActivity(FocusActivity)")
+                startActivity(
+                    Intent(this@FocusForegroundService, FocusActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                            Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                    },
+                )
+            }
         }
     }
 
@@ -139,6 +159,9 @@ class FocusForegroundService : Service() {
     companion object {
         const val ACTION_START = "com.wizedup.focus.action.START_FOCUS"
         const val ACTION_STOP = "com.wizedup.focus.action.STOP_FOCUS"
+
+        /** When true on [ACTION_START], [BootReceiver] asked us to try resuming the lock UI. */
+        const val EXTRA_FROM_BOOT_RESUME = "com.wizedup.focus.extra.FROM_BOOT_RESUME"
 
         // Stable id; the OS replaces a notification with the same id when we update.
         const val NOTIFICATION_ID = 1001

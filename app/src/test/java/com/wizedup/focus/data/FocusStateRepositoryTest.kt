@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -66,6 +67,7 @@ class FocusStateRepositoryTest {
             val first = awaitItem()
             assertThat(first.isActive).isFalse()
             assertThat(first.startedAtMs).isNull()
+            assertThat(first.clientSessionId).isNull()
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -80,6 +82,8 @@ class FocusStateRepositoryTest {
             val s = awaitItem()
             assertThat(s.isActive).isTrue()
             assertThat(s.startedAtMs).isNotNull()
+            assertThat(s.clientSessionId).isNotNull()
+            UUID.fromString(s.clientSessionId!!)
             // Allow ±1 s skew for test timing on slow CI.
             assertThat(s.startedAtMs!! >= before - 1_000L).isTrue()
             assertThat(s.startedAtMs!! <= after + 1_000L).isTrue()
@@ -96,6 +100,7 @@ class FocusStateRepositoryTest {
             val s = awaitItem()
             assertThat(s.isActive).isFalse()
             assertThat(s.startedAtMs).isNull()
+            assertThat(s.clientSessionId).isNull()
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -110,6 +115,7 @@ class FocusStateRepositoryTest {
         val snap = focusRepo.snapshot(timeoutMs = 5_000L)
         assertThat(snap.isActive).isTrue()
         assertThat(snap.startedAtMs).isNotNull()
+        assertThat(snap.clientSessionId).isNotNull()
     }
 
     // -- student.* --

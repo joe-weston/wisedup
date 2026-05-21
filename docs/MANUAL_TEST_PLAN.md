@@ -26,7 +26,7 @@ assumes the app is installed but state-fresh.
 
 ### Steps (first launch)
 1. Tap the WizedUp Focus icon.
-2. Onboarding screen appears: title "Welcome to WizedUp", a "Your name" field, "Continue"
+2. Onboarding screen appears: title "Welcome to WizedUp", a "Name or student ID" field, "Continue"
    disabled.
 3. Type "Alex M.". Continue enables.
 4. Tap **Continue**. Home screen appears: greeting "Hey, Alex M.", green "Focus Off"
@@ -96,16 +96,22 @@ assumes the app is installed but state-fresh.
    - Emulator: `adb reboot` (or use the AVD's "Cold boot" menu).
    - Physical: hold power → Restart, or `adb reboot` over USB.
 2. Wait for boot to complete and unlock the device.
-3. Within 10 seconds of unlock, pull the notification shade. The "Focus Mode active"
+3. **Resume UX:** The app may bring the red **Focus Active** screen forward automatically once
+   the foreground service starts (boot-resume path). If it does not (OEM / timing), use the
+   notification in the next step.
+4. Within 10 seconds of unlock, pull the notification shade. The "Focus Mode active"
    notification should be visible.
-4. Tap the notification → FocusActivity opens.
-5. From the launcher, attempt to open another app (e.g. Calculator). The first attempt
+5. If you are not already on FocusActivity, tap the notification → FocusActivity opens.
+6. From the launcher, attempt to open another app (e.g. Calculator). The first attempt
    may succeed for ~5–30 s while the AccessibilityService is rebinding; subsequent
    attempts are blocked by the relaunch loop.
 
 ### Expected
 - `is_active` is true after the reboot read.
 - ForegroundService starts within 10 s of `BOOT_COMPLETED`.
+- **Optional:** FocusActivity may appear automatically after unlock (no tap required) when
+  the OS allows a start from the foreground service; otherwise the persistent notification
+  remains the explicit resume path.
 - Notification is ongoing and tappable.
 - AccessibilityService rebinds within ~30 s and resumes the relaunch loop.
 - Per locked PM decision #3, NO toast / NO banner appears — only the persistent
@@ -218,3 +224,58 @@ When all five sections pass, QA records the following on the R1 PR:
       ADR-002 risk #1).
 
 Once all boxes are ticked, the PM gates R1 → R2.
+
+> **R2 note:** The R1 checklist above assumes an R1-only build with no network stack.
+> The merged app adds `INTERNET` for Supabase (MISSION.md Release 2). Use the **Release 2**
+> section below for R2 QA; the R1 bullets remain the bar for a hypothetical R1-only APK audit.
+
+---
+
+## Release 2 — Compliance logging (MISSION.md + RELEASES-R2.md)
+
+**Audience:** QA validating R2 acceptance criteria before PM gates R2 → R3.
+
+**Prerequisites**
+
+- Supabase project with migration [supabase/migrations/20260512120000_r2_compliance_logging.sql](supabase/migrations/20260512120000_r2_compliance_logging.sql) applied.
+- `local.properties` on the build machine contains `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (Supabase publishable key only — never `service_role`).
+- A known school row exists (seed `DEMO-001` from the migration, or your own `schools` row).
+
+### R2-1 — School registration
+
+1. Fresh install (clear app data).
+2. Complete onboarding with a display name.
+3. **Expected:** “Connect to your school” appears.
+4. Enter `DEMO-001`, tap **Save and continue**.
+5. **Expected:** Home screen appears; Supabase `students` contains a row whose `id` matches DataStore `student.id` (UUID from onboarding).
+
+### R2-2 — Online focus events (< 5 s)
+
+1. With network on, activate Focus, wait 2 s, exit Focus.
+2. **Expected:** Within 5 s, `focus_sessions` shows a row with matching `client_session_id` pattern (UUID), non-null `started_at`, and `ended_at` + `duration_seconds` populated after exit.
+
+### R2-3 — Offline queue
+
+1. Enable airplane mode.
+2. Activate and exit Focus once (or repeat twice).
+3. Disable airplane mode; wait up to 1 minute (WorkManager backoff).
+4. **Expected:** All corresponding `focus_sessions` rows appear without duplicates beyond idempotent RPC behavior.
+
+### R2-4 — Bypass event
+
+1. With focus active, open system Settings → Accessibility → disable **WizedUp Focus** service.
+2. **Expected:** `bypass_events` gains a row with `event_type = accessibility_disabled` linked to the active session when possible.
+
+### R2-5 — RLS / no peer reads
+
+1. From SQL editor or REST as `anon`, attempt `select * from focus_sessions limit 1` (direct table select).
+2. **Expected:** permission denied / empty per revoked grants; writes succeed only via RPC with valid `sync_token`.
+
+### R2 sign-off checklist
+
+- [ ] R2-1–R2-5 passed on a device or emulator with a real Supabase project.
+- [ ] `aapt dump permissions` shows `INTERNET` (expected for R2); no `service_role` or MDM permissions added.
+- [ ] Payload inspection: no app content, contacts, or URLs beyond Supabase host + RPC paths.
+
+When all boxes are ticked, the PM gates R2 → R3 per MISSION.md.
+

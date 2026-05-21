@@ -37,7 +37,7 @@ import com.wizedup.focus.ui.theme.FocusActiveRed
  * Compose root for the focus lock surface (US-R1-06).
  *
  * - Red full-bleed surface with white ink for contrast (WCAG AA).
- * - Title, display name, MM:SS / HH:MM:SS elapsed timer.
+ * - Title ("Focus Active"), subtitle ("You're focused"), display name, elapsed timer.
  * - Single Exit Focus button → confirmation dialog (US-R1-10).
  */
 @Composable
@@ -71,6 +71,13 @@ fun FocusScreen(
                     style = MaterialTheme.typography.displaySmall,
                     color = FocusActiveOn,
                     fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.focus_active_subtitle),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = FocusActiveOn.copy(alpha = 0.92f),
+                    fontWeight = FontWeight.Medium,
                 )
                 if (displayName.isNotBlank()) {
                     Spacer(Modifier.height(12.dp))

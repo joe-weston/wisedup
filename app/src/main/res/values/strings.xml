@@ -9,8 +9,8 @@
     <!-- Onboarding (US-R1-03). -->
     <string name="onboarding_title">Welcome to WizedUp</string>
     <string name="onboarding_subtitle">Focus is voluntary. You can exit any time.</string>
-    <string name="onboarding_name_label">Your name</string>
-    <string name="onboarding_name_placeholder">e.g. Alex M.</string>
+    <string name="onboarding_name_label">Name or student ID</string>
+    <string name="onboarding_name_placeholder">e.g. Alex M. or 12345</string>
     <string name="onboarding_continue">Continue</string>
     <string name="onboarding_name_counter">%1$d / %2$d</string>
 
@@ -30,14 +30,15 @@
 
     <!-- Focus screen (US-R1-06). -->
     <string name="focus_active_title">Focus Active</string>
+    <string name="focus_active_subtitle">You’re focused</string>
     <string name="focus_active_name">%1$s</string>
     <string name="focus_active_elapsed_short">%1$02d:%2$02d</string>
     <string name="focus_active_elapsed_long">%1$02d:%2$02d:%3$02d</string>
     <string name="focus_exit_button">Exit Focus</string>
 
-    <!-- Exit confirm dialog (US-R1-10). Verbatim copy from the story spec. -->
+    <!-- Exit confirm dialog (US-R1-10); body updated for R2 transparency. -->
     <string name="exit_dialog_title">Exit Focus Mode?</string>
-    <string name="exit_dialog_body">Your session will be logged in a future release.</string>
+    <string name="exit_dialog_body">Your school can see when focus starts and ends, and if the accessibility service is turned off while focus is on. Nothing you type in other apps is collected.</string>
     <string name="exit_dialog_confirm">Exit</string>
     <string name="exit_dialog_dismiss">Stay focused</string>
 
@@ -46,6 +47,15 @@
     <string name="notification_channel_description">Shown while WizedUp Focus is active so you always know your status.</string>
     <string name="notification_title">Focus Mode active</string>
     <string name="notification_text">Tap to return to focus screen</string>
+
+    <!-- R2 school registration (compliance logging). -->
+    <string name="school_registration_title">Connect to your school</string>
+    <string name="school_registration_subtitle">Signed in as %1$s</string>
+    <string name="school_registration_transparency">WizedUp logs focus start and end times, plus attempts to disable the accessibility service, so your school can review phone-policy compliance. Only your name or ID and these events are sent — never messages or app content.</string>
+    <string name="school_registration_code_label">School code</string>
+    <string name="school_registration_code_placeholder">e.g. DEMO-001</string>
+    <string name="school_registration_code_counter">%1$d / %2$d</string>
+    <string name="school_registration_continue">Save and continue</string>
 
     <!-- Misc -->
     <string name="content_description_status_indicator">Focus status indicator</string>

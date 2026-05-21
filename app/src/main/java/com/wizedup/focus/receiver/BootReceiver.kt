@@ -49,8 +49,14 @@ class BootReceiver : BroadcastReceiver() {
                 if (state?.isActive == true) {
                     // Per ADR-003: start the foreground service. The accessibility service
                     // will rebind on its own schedule; the persistent notification is the
-                    // bridge. Per locked PM decision #3, no toast / no banner.
-                    FocusServiceController.start(context)
+                    // bridge. Pass boot-resume so FGS may bring FocusActivity forward when BAL
+                    // allows. Per locked PM decision #3, no toast / no banner.
+                    FocusServiceController.start(context, fromBootResume = true)
+                }
+                try {
+                    WizedUpApplication.get().scheduleComplianceSyncIfNeeded()
+                } catch (_: Throwable) {
+                    // Defensive: never crash the receiver if Application wiring is unavailable.
                 }
             } finally {
                 pendingResult.finish()

@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Cold start: Android 12+ SplashScreen API; hands off to Theme.WizedUpFocus after installSplashScreen(). -->
+    <style name="Theme.WizedUpFocus.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/surface_light</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.WizedUpFocus</item>
+    </style>
+
     <!-- Base theme. Material3 Dynamic Color is OK if available; we fall back to our tokens. -->
     <style name="Theme.WizedUpFocus" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
