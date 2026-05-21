@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Cold start: Android 12+ SplashScreen API; hands off to Theme.WizedUpFocus after installSplashScreen(). -->
+    <style name="Theme.WizedUpFocus.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/surface_light</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.WizedUpFocus</item>
+    </style>
+
+    <!-- Base theme. Material3 Dynamic Color is OK if available; we fall back to our tokens. -->
+    <style name="Theme.WizedUpFocus" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/surface_light</item>
+    </style>
+
+    <!--
+      Fullscreen variant for FocusActivity.
+      - No action bar, no system bar contrast.
+      - immersive sticky is applied programmatically via SystemUiUtils.applyImmersive().
+    -->
+    <style name="Theme.WizedUpFocus.Fullscreen" parent="Theme.WizedUpFocus">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowContentTransitions">false</item>
+        <item name="android:statusBarColor">@color/focus_active_red</item>
+        <item name="android:navigationBarColor">@color/focus_active_red</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>

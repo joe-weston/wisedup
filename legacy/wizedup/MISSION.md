@@ -45,8 +45,8 @@ WizedUp is a **voluntary, accountability-first focus app** for students. Unlike 
 - No network calls in R1
 
 ### Acceptance Criteria
-- [ ] Student can open app and activate Focus Mode in ≤ 2 taps — measured **from the home screen after one-time setup**; onboarding + system Settings for accessibility are excluded from the count (see [docs/MANUAL_TEST_PLAN.md](docs/MANUAL_TEST_PLAN.md) Section 1).
-- [ ] All other apps are inaccessible during Focus Mode — **with the accessibility service enabled**; disabling it in Settings is an intentional bypass path until R2 logging ([docs/adr/ADR-002-blocking-mechanism.md](docs/adr/ADR-002-blocking-mechanism.md)).
+- [ ] Student can open app and activate Focus Mode in ≤ 2 taps
+- [ ] All other apps are inaccessible during Focus Mode
 - [ ] Focus Mode survives device reboot
 - [ ] Student can voluntarily exit at any time
 - [ ] App does not require school IT involvement to install
@@ -103,8 +103,6 @@ bypass_events   (id, student_id, session_id, event_type, timestamp)
 - [ ] Dashboard loads in < 2s for up to 500 students
 - [ ] All charts accurate against raw Supabase data
 - [ ] CSV export includes all displayed fields
-
-**Compliance % (R3):** Session-based rate — share of enrolled students with ≥1 **completed** focus session (`ended_at` set, `duration_seconds >= 60`) per UTC calendar day or **week bucket (Monday-start, UTC)**; see [docs/adr/ADR-006-r3-admin-dashboard.md](docs/adr/ADR-006-r3-admin-dashboard.md).
 
 ---
 

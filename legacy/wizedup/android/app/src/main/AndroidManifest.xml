@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Required so FocusAccessibilityService can resolve foreground packages on Android 11+. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+        </intent>
+    </queries>
+
+    <!-- Permissions documented in R1_architecture.md §"Permissions". -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- Declared for `aapt dump permissions` traceability per US-R1-08 AC. The runtime grant
+         is enforced via the <service android:permission=> attribute below; this is a no-op at runtime. -->
+    <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
+
+    <application
+        android:name=".WizedUpApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.WizedUpFocus"
+        tools:targetApi="34">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.WizedUpFocus">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          FocusActivity: full-screen lock surface.
+          - singleTask: only one instance ever; relaunches reuse it.
+          - excludeFromRecents: hide from app switcher to reduce escape-hatch surface.
+          - clearTaskOnLaunch: any background-resumed task is cleared.
+          - showWhenLocked + turnScreenOn: visible above keyguard for boot-resume case.
+          See ADR-002 §Decision and US-R1-06 ACs.
+        -->
+        <activity
+            android:name=".ui.focus.FocusActivity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:clearTaskOnLaunch="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:taskAffinity=""
+            android:noHistory="false"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:theme="@style/Theme.WizedUpFocus.Fullscreen" />
+
+        <!--
+          FocusForegroundService: type=specialUse for Android 14+.
+          The <property> declares the subtype slug ("focus_lock_persistence"); see ADR-003.
+        -->
+        <service
+            android:name=".service.FocusForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="focus_lock_persistence" />
+        </service>
+
+        <!--
+          AccessibilityService: the relaunch loop (US-R1-08).
+          BIND_ACCESSIBILITY_SERVICE is enforced by the system on this <service>.
+        -->
+        <service
+            android:name=".service.FocusAccessibilityService"
+            android:exported="true"
+            android:label="@string/accessibility_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <!--
+          BootReceiver: re-arms focus after reboot (US-R1-11).
+          Listens for BOOT_COMPLETED only; LOCKED_BOOT_COMPLETED is intentionally NOT
+          handled because DataStore is not direct-boot aware. See ADR-003 and US-R1-11 AC.
+          (The story prompt asked us to *consider* LOCKED_BOOT_COMPLETED and document the
+          choice — we've documented it here in the manifest comment and in the receiver.)
+        -->
+        <receiver
+            android:name=".receiver.BootReceiver"
+            android:exported="true"
+            android:directBootAware="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>
