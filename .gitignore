@@ -4,6 +4,10 @@
 .idea/
 .DS_Store
 /build
+/app/
+/web/
+/package-lock.json
+/.github/workflows/android.yml
 apps/android/build/
 apps/web-admin/.next/
 apps/web-admin/node_modules/
@@ -13,6 +17,17 @@ apps/web-admin/node_modules/
 local.properties
 supabase/.temp/
 .kotlin/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+apps/web-admin/.env
+apps/web-admin/.env.*
+!apps/web-admin/.env.example
+
+# Local/vector DB artifacts
+*.db
 
 # Claude Code & swarm tooling state (per-user, not portable)
 .claude/
